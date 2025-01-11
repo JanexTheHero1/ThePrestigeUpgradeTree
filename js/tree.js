@@ -208,7 +208,8 @@ addLayer("p", {
             buttonStyle: {
                 "width": "450px",
                 "margin": "10px"
-            }
+            },
+            unlocked: false
         }
     },
     upgrades: {
