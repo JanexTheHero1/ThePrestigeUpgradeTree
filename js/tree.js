@@ -209,7 +209,7 @@ addLayer("p", {
                 "width": "450px",
                 "margin": "10px"
             },
-            unlocked: false
+            unlocked() {return false}
         }
     },
     upgrades: {
