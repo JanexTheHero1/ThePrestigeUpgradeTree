@@ -6,21 +6,29 @@ let modInfo = {
 	modFiles: ["layers.js", "tree.js"],
 
 	discordName: "Jake Vector's Official Discord",
-	discordLink: "https://discord.gg/p73CKRf6",
+	discordLink: "https://discord.gg/4dECpMyJmb",
 	initialStartPoints: new Decimal (0), // Used for hard resets and new players
 	offlineLimit: 1,  // In hours
 }
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.8",
-	name: "I know, so cool",
+	num: "0.9",
+	name: "The update of version 0.9",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
+	<h3>v0.9</h3><br>
+		- Fixed upgrade p3 (2.5x p)<br>
+		- Buffed Negative Points’ effect, essentially nerfing point gain slightly<br>
+		- Fixed upgrade n2’s effect, preventing breaking the game… every time<br>
+		- Completed upgrade n3<br>
+		- Added upgrades n4 and n5, completing early Negative section<br>
+		- Made the tab for Row 2 with 2 empty layers, Booster Energy and Generators.<br>
+		- New endgame: 1 of either Booster Energy or Generators<br><br>
 	<h3>v0.8</h3><br>
 		- Added the first negative upgrade.<br>
-		- Submitted the game to <a href="https://galaxy.click">galaxy.click</a>.<br><br> 
+		- Submitted the game to <a href="https://galaxy.click">galaxy.click</a> (And didn't realize it got accepted until a year later).<br><br>
 	<h3>v0.7</h3><br>
 		- Broke negative a lot and had to remake it.<br>
 		- FIXED NEGATIVE AND ADDED AN EFFECT LETS GOOOO (Now I can make content)<br><br>
@@ -92,6 +100,7 @@ function getPointGen() {
 	//PGM+ upgrades	
 	if(hasUpgrade('p',11)) gain = gain.times(3)
 	if(hasUpgrade('p',21)) gain = gain.times(2)
+	if(hasUpgrade('p',22)) gain = gain.times(2.5)
 	if(hasUpgrade('p',31)) gain = gain.times(1.5)
 	if(hasUpgrade('p',33)) gain = gain.times(2)
 	if(hasUpgrade('p',41)) gain = gain.times(3)
@@ -106,6 +115,7 @@ function getPointGen() {
 	if(hasUpgrade('og',22)) gain = gain.times(upgradeEffect('og',22))
 	if(hasUpgrade('pr',31)) gain = gain.times(3)
 	if(hasUpgrade('p',62)) gain = gain.times(upgradeEffect('p',62))
+	if(hasUpgrade('np',22)) gain = gain.times(upgradeEffect('np',22))
 
 	return gain
 }
@@ -120,7 +130,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return hasUpgrade('np',11)
+	return (player.bst.points.gte(1) || player.gen.points.gte(1))
 }
 
 

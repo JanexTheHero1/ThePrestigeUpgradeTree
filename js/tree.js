@@ -129,8 +129,13 @@ addLayer("main", {
             glowColor: "#287233"
         },
         "Row 2": {
-            content: [""],
-            unlocked() {return false}
+            embedLayer: "r2",
+            unlocked() {return hasUpgrade('np',41)},
+            buttonStyle: {
+                "color": "#6f64c5",
+                "border-color": "#a4daa5"
+            },
+            glowColor: "#6f64c5"
         },
         "Ascension": {
             content: ["main-display",
@@ -413,7 +418,7 @@ addLayer("p", {
     }, //contains one copyable achievement.
     infoboxes: {
         1: {
-            title() {return "You have " + format(player.points) + "p (Points) | +" + format(getPointGen()) + "/s‎"},
+            title() {return "You have " + format(player.points) + "p (Points) | +" + format(getPointGen()) + "/s"},
             body() {return "Before you begin to play, go to the tree tab and navigate to the settings, then set single-tab mode to ALWAYS. This is very important! Once you've done that, you can click on the white section at the top of this infobox to minimize it."},
             unlocked() {return true}
         }
@@ -526,6 +531,7 @@ addLayer("pr", {
         if(hasUpgrade('pr',31)) mult = mult.times(1.5)
         if(hasUpgrade('pr',13)) mult = mult.times(2)
         if(hasUpgrade('p',63)) mult = mult.times(upgradeEffect('p',63))
+        if(hasUpgrade('np',21)) mult = mult.times(upgradeEffect('np',21))
         return mult
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
@@ -795,7 +801,7 @@ addLayer("np", {
     requires: new Decimal(10),
     resource: "Negative Points",
     effect() {
-        var effect = player.np.points.pow(0.15)
+        var effect = player.np.points.pow(0.2)
         return effect
     },
     canReset: false,
@@ -807,6 +813,7 @@ addLayer("np", {
         mult = new Decimal(0)
         if(hasUpgrade('p',901)) mult = new Decimal(getPointGen()).pow(0.01).div(getPointGen().pow(0.06)).times(6)
         if(hasUpgrade(this.layer,11)) mult = mult.times(upgradeEffect(this.layer,11))
+        if(hasUpgrade(this.layer,41)) mult = mult.times(upgradeEffect(this.layer,41))
         return mult
     },
     tabFormat: {
@@ -815,7 +822,7 @@ addLayer("np", {
                 ["infobox",1],
                 ["infobox",2],
                 "blank",
-                ["upgrade-tree", [[31],[21],[11]]]
+                ["upgrade-tree", [[41],[31],[21, 22],[11]]]
             ],
         }
     },
@@ -838,7 +845,7 @@ addLayer("np", {
             Currently: ` + format(this.effect()) + `x<br>
             Requires: 50n`},
             effect() {
-                return player.np.points.pow(0.125)
+                return player.np.points.pow(0.125).add(1)
             },
             canAfford() {return player.np.points.gte(50)},
             pay() {player.np.points = new Decimal(0)},
@@ -855,16 +862,305 @@ addLayer("np", {
             },
             canAfford() {return player.points.gte(150)},
             pay() {player.np.points = new Decimal(0)},
-            unlocked() {return hasUpgrade(this.layer,11)}
+            unlocked() {return hasUpgrade(this.layer,11)},
+            branches: [21]
         },
         21: {
             fullDisplay() {return `<h3>n3: Falling</h3><br>
-            Negative Points boost Prestige point gain`},
-            unlocked() {return hasUpgrade(this.layer,31)}
+            Negative Points boost Prestige point gain<br>
+            Currently: ` + format(this.effect()) + `x<br>
+            Requires 250n`},
+            effect() {
+                return player.np.points.pow(0.4)  
+            },
+            canAfford() {return player.points.gte(250)},
+            pay() {player.np.points = new Decimal(0)},
+            unlocked() {return hasUpgrade(this.layer,31)},
+            branches: [22]
+        },
+        22: {
+            fullDisplay() {return `<h3>n4: Crossing</h3><br>
+                Negative Points boost Point gain<br>
+                Currently: ` + format(this.effect()) + `x<br>
+                Requires 400n`},
+                effect() {
+                    return player.np.points.pow(0.25)  
+                },
+                canAfford() {return player.points.gte(400)},
+                pay() {player.np.points = new Decimal(0)},
+                unlocked() {return hasUpgrade(this.layer,21)},
+                branches: [41]
+        },
+        41: {
+            fullDisplay() {return `<h3>n5: Quintuple Whopper(?)</h3><br>
+                Points boost Negative Point gain<br>
+                Currently: ` + format(this.effect()) + `x<br>
+                Requires 600n`},
+                effect() {
+                    return player.points.pow(0.01)  
+                },
+                canAfford() {return player.points.gte(400)},
+                pay() {player.np.points = new Decimal(0)},
+                unlocked() {return hasUpgrade(this.layer,22)},
+                tooltip: "Unlocks the next row with 2 reset layers this time."
         }
     },
     passiveGeneration() {return 1},
     unlocked: true,
     layerShown: false
+})
+
+addLayer("r2", {
+    name: "Prestige", // This is optional, only used in a few places, If absent it just uses the layer id.
+    symbol: "P", // This appears on the layer's node. Default is the id with the first letter capitalized
+    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    startData() { return {
+        unlocked: true,
+		points: new Decimal(0),
+    }},
+    color: "#AAAAAA",
+    requires: new Decimal(100000), // Can be a function that takes requirement increases into account
+    resource: "Prestige points", // Name of prestige currency
+    baseResource: "Points", // Name of resource prestige is based on
+    baseAmount() {return player.points}, // Get the current amount of baseResource
+    prestigeButtonText() {return `Reset Points and Point upgrades for ` + getResetGain(this.layer) + ` Prestige Points`},
+    type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
+    exponent: 0.4, // Prestige currency exponent
+    gainMult() { // Calculate the multiplier for main currency from bonuses
+        mult = new Decimal(1)
+        return mult
+    },
+    gainExp() { // Calculate the exponent on main currency from bonuses
+        return new Decimal(1)
+    },
+    row: 1, // Row the layer is in on the tree (0 is the first row)
+    tabFormat: {
+        "Booster Energy": {
+            embedLayer: "bst",
+            glowColor: "#6f64c5",
+            buttonStyle: {
+                "width": "450px",
+                "margin": "10px",
+                "color": "#6f64c5",
+                "border-color": "#6f64c5"
+            },
+        },
+        "Generators": {
+            embedLayer: "gen",
+            glowColor: "#287233",
+            unlocked() {return hasUpgrade('pr',12)},
+            buttonStyle: {
+                "width": "450px",
+                "margin": "10px",
+                "color": "#a4daa5",
+                "border-color": "#a4daa5"
+            },
+        }
+    },
+    upgrades: {
+    }, //contains one copyable upgrade.
+    achievements: {
+        11: {
+            name: "Example",
+            done() { return },
+            tooltip: "Example",
+            effect() {},
+            unlocked() {},
+            onComplete() {},
+        }
+    }, //contains one copyable achievement.
+    infoboxes: {
+    }, //Contains one copyable infobox.
+    milestones: {
+    }, //Contains one copyable milestone.
+    buyables: {
+        11: {
+            cost(x) { return new Decimal(1).mul(x) },
+            display() { return "Example" },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return },
+            effect() { return },
+            display() { return },
+            purchaseLimit: {},
+            tooltip: "Example"
+        },
+    }, //Contains one copyable buyable.
+    //I would add a challenge but I am NOT doing allat (maybe later)
+    layerShown(){return false},
+    unlocked() {return false},
+    tooltip() {return player[this.layer].points+" "+this.resource+` <br>
+    Click to view`}
+})
+
+addLayer("bst", {
+    name: "booster energy", // This is optional, only used in a few places, If absent it just uses the layer id.
+    symbol: "Bst", // This appears on the layer's node. Default is the id with the first letter capitalized
+    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    startData() { return {
+        unlocked: true,
+		points: new Decimal(0),
+    }},
+    color: "#6f64c5",
+    requires: new Decimal(5e18), // Can be a function that takes requirement increases into account
+    resource: "Booster Energy", // Name of prestige currency
+    baseResource: "Points", // Name of resource prestige is based on
+    baseAmount() {return player.points}, // Get the current amount of baseResource
+    type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
+    exponent: 0.15, // Prestige currency exponent
+    gainMult() { // Calculate the multiplier for main currency from bonuses
+        mult = new Decimal(1)
+        return mult
+    },
+    gainExp() { // Calculate the exponent on main currency from bonuses
+        return new Decimal(1)
+    },
+    row: 2, // Row the layer is in on the tree (0 is the first row)
+    upgrades: {
+        11: {
+            title: "Example",
+            description: "Example",
+            effect() {return null},
+            effectDisplay() {return format("Tax")},
+            cost: 1,
+            unlocked() {return false},
+            onPurchase() {},
+            tooltip: "Example"
+        }
+    }, //contains one copyable upgrade.
+    achievements: {
+        11: {
+            name: "Example",
+            done() { return },
+            tooltip: "Example",
+            effect() {},
+            unlocked() {},
+            onComplete() {},
+        }
+    }, //contains one copyable achievement.
+    infoboxes: {
+        1: {
+            title() {return "You have " + format(player[this.layer].points) + "B (Booster Energy)"},
+            body() {return `This is the first tier 2 reset layer, Booster Energy. After resetting for it, you can use it to buy OG Boosters as well as upgrades in the tab for its own tree.<br>It's up to you which one you choose first. Have fun!<br><br>Note that the first row 2 reset is currently endgame.`},
+            unlocked() {return true},
+        },
+    }, //Contains one copyable infobox.
+    milestones: {
+        1: {
+            requirementDescription: "Example",
+            effectDescription: "Gives you an Example",
+            done() {},
+            onComplete() {},
+            unlocked() {},
+        },
+    }, //Contains one copyable milestone.
+    buyables: {
+        11: {
+            cost(x) { return new Decimal(1).mul(x) },
+            display() { return "Example" },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return },
+            effect() { return },
+            display() { return },
+            purchaseLimit: {},
+            tooltip: "Example"
+        },
+    }, //Contains one copyable buyable.
+    //I would add a challenge but I am NOT doing allat (maybe later)
+    layerShown(){return false},
+    unlocked() {return false},
+    tooltip() {return player[this.layer].points+" "+this.resource+` <br>
+    Click to view`}
+})
+
+addLayer("gen", {
+    name: "generators", // This is optional, only used in a few places, If absent it just uses the layer id.
+    symbol: "Gen", // This appears on the layer's node. Default is the id with the first letter capitalized
+    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    startData() { return {
+        unlocked: true,
+		points: new Decimal(0),
+    }},
+    color: "#a4daa5",
+    requires: new Decimal(5e18), // Can be a function that takes requirement increases into account
+    resource: "Generators", // Name of prestige currency
+    baseResource: "Points", // Name of resource prestige is based on
+    baseAmount() {return player.points}, // Get the current amount of baseResource
+    type: "static", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
+    exponent: 1.25, // Prestige currency exponent
+    gainMult() { // Calculate the multiplier for main currency from bonuses
+        mult = new Decimal(1)
+        return mult
+    },
+    gainExp() { // Calculate the exponent on main currency from bonuses
+        return new Decimal(1)
+    },
+    row: 2, // Row the layer is in on the tree (0 is the first row)
+    upgrades: {
+        11: {
+            title: "Example",
+            description: "Example",
+            effect() {return null},
+            effectDisplay() {return format("Tax")},
+            cost: 1,
+            unlocked() {return false},
+            onPurchase() {},
+            tooltip: "Example"
+        }
+    }, //contains one copyable upgrade.
+    achievements: {
+        11: {
+            name: "Example",
+            done() { return },
+            tooltip: "Example",
+            effect() {},
+            unlocked() {},
+            onComplete() {},
+        }
+    }, //contains one copyable achievement.
+    infoboxes: {
+        1: {
+            title() {return "You have " + format(player[this.layer].points) + "G (Generators)"},
+            body() {return `This is the other tier 2 reset layer, Generators. After resetting for it, you can use it to buy upgrades in the main tree, and you will soon begin to generate another resource you can put into buyables.<br>It's up to you which one you choose first. Have fun!<br><br>Note that the first row 2 reset is currently endgame.`},
+            unlocked() {return true},
+        },
+    }, //Contains one copyable infobox.
+    milestones: {
+        1: {
+            requirementDescription: "Example",
+            effectDescription: "Gives you an Example",
+            done() {},
+            onComplete() {},
+            unlocked() {},
+        },
+    }, //Contains one copyable milestone.
+    buyables: {
+        11: {
+            cost(x) { return new Decimal(1).mul(x) },
+            display() { return "Example" },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return },
+            effect() { return },
+            display() { return },
+            purchaseLimit: {},
+            tooltip: "Example"
+        },
+    }, //Contains one copyable buyable.
+    //I would add a challenge but I am NOT doing allat (maybe later)
+    layerShown(){return false},
+    unlocked() {return false},
+    tooltip() {return player[this.layer].points+" "+this.resource+` <br>
+    Click to view`}
 })
 //13123241
