@@ -130,7 +130,7 @@ addLayer("main", {
         },
         "Row 2": {
             embedLayer: "r2",
-            unlocked() {return hasUpgrade('np',41)},
+            unlocked() {return hasUpgrade('np',41) || hasUpgrade('bst',11) || hasUpgrade('gen',11)},
             buttonStyle: {
                 "color": "#6f64c5",
                 "border-color": "#a4daa5"
@@ -214,7 +214,7 @@ addLayer("p", {
                 "width": "450px",
                 "margin": "10px"
             },
-            unlocked() {return false}
+            unlocked() {return true}
         }
     },
     upgrades: {
@@ -483,6 +483,12 @@ addLayer("p", {
             display() {return `Yeah.`},
             canClick() {return true},
             onClick() {player.np.points = player.np.points.sub(player.np.points)}
+        },
+        42: {
+            title: "Reset your Genergy.",
+            display() {return `Yeah.`},
+            canClick() {return true},
+            onClick() {player.gnr.points = player.gnr.points.sub(player.gnr.points)}
         }
     },
     buyables: {
@@ -521,7 +527,7 @@ addLayer("pr", {
     resource: "Prestige points", // Name of prestige currency
     baseResource: "Points", // Name of resource prestige is based on
     baseAmount() {return player.points}, // Get the current amount of baseResource
-    prestigeButtonText() {return `Reset Points and Point upgrades for ` + getResetGain(this.layer) + ` Prestige Points`},
+    prestigeButtonText() {return `Reset Points and Point upgrades for ` + format(getResetGain(this.layer)) + ` Prestige Points`},
     type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
     exponent: 0.4, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
@@ -532,6 +538,9 @@ addLayer("pr", {
         if(hasUpgrade('pr',13)) mult = mult.times(2)
         if(hasUpgrade('p',63)) mult = mult.times(upgradeEffect('p',63))
         if(hasUpgrade('np',21)) mult = mult.times(upgradeEffect('np',21))
+        if(hasUpgrade('bst',11)) mult = mult.times(upgradeEffect('bst',11))
+        mult = mult.times(buyableEffect('bst',12))
+        mult = mult.times(buyableEffect('gnr',12))
         return mult
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
@@ -677,6 +686,7 @@ addLayer("og", {
     name: "OG prestige",
     symbol: "og",
     position: 1,
+    row: 1,
     startData() {return {
         unlocked: true,
         points: 0
@@ -785,7 +795,8 @@ addLayer("og", {
             tooltip: "Check main prestige upgrades after",
             unlocked(){return hasUpgrade(this.layer,22)}
         }
-    }
+    },
+    layerShown: false
 })
 
 addLayer("np", {
@@ -813,7 +824,11 @@ addLayer("np", {
         mult = new Decimal(0)
         if(hasUpgrade('p',901)) mult = new Decimal(getPointGen()).pow(0.01).div(getPointGen().pow(0.06)).times(6)
         if(hasUpgrade(this.layer,11)) mult = mult.times(upgradeEffect(this.layer,11))
+        if(hasUpgrade(this.layer,31)) mult = mult.times(upgradeEffect(this.layer,31))
         if(hasUpgrade(this.layer,41)) mult = mult.times(upgradeEffect(this.layer,41))
+        if(hasUpgrade('bst',11)) mult = mult.times(upgradeEffect('bst',11))
+        mult = mult.times(buyableEffect('bst',13))
+        mult = mult.times(buyableEffect('gnr',21))
         return mult
     },
     tabFormat: {
@@ -858,9 +873,9 @@ addLayer("np", {
             Currently: ` + format(this.effect()) + `x<br>
             Requires: 150n`},
             effect() {
-                return player.pr.points.pow(0.0125)  
+                return player.pr.points.pow(0.0125).add(1)
             },
-            canAfford() {return player.points.gte(150)},
+            canAfford() {return player.np.points.gte(150)},
             pay() {player.np.points = new Decimal(0)},
             unlocked() {return hasUpgrade(this.layer,11)},
             branches: [21]
@@ -871,9 +886,9 @@ addLayer("np", {
             Currently: ` + format(this.effect()) + `x<br>
             Requires 250n`},
             effect() {
-                return player.np.points.pow(0.4)  
+                return player.np.points.pow(0.4).add(1)
             },
-            canAfford() {return player.points.gte(250)},
+            canAfford() {return player.np.points.gte(250)},
             pay() {player.np.points = new Decimal(0)},
             unlocked() {return hasUpgrade(this.layer,31)},
             branches: [22]
@@ -884,9 +899,9 @@ addLayer("np", {
                 Currently: ` + format(this.effect()) + `x<br>
                 Requires 400n`},
                 effect() {
-                    return player.np.points.pow(0.25)  
+                    return player.np.points.pow(0.25).add(1)
                 },
-                canAfford() {return player.points.gte(400)},
+                canAfford() {return player.np.points.gte(400)},
                 pay() {player.np.points = new Decimal(0)},
                 unlocked() {return hasUpgrade(this.layer,21)},
                 branches: [41]
@@ -897,9 +912,9 @@ addLayer("np", {
                 Currently: ` + format(this.effect()) + `x<br>
                 Requires 600n`},
                 effect() {
-                    return player.points.pow(0.01)  
+                    return player.points.pow(0.01).add(1)
                 },
-                canAfford() {return player.points.gte(400)},
+                canAfford() {return player.np.points.gte(600)},
                 pay() {player.np.points = new Decimal(0)},
                 unlocked() {return hasUpgrade(this.layer,22)},
                 tooltip: "Unlocks the next row with 2 reset layers this time."
@@ -938,6 +953,7 @@ addLayer("r2", {
         "Booster Energy": {
             embedLayer: "bst",
             glowColor: "#6f64c5",
+            unlocked() {return hasUpgrade('pr',12) || hasUpgrade('bst',11)},
             buttonStyle: {
                 "width": "450px",
                 "margin": "10px",
@@ -948,7 +964,7 @@ addLayer("r2", {
         "Generators": {
             embedLayer: "gen",
             glowColor: "#287233",
-            unlocked() {return hasUpgrade('pr',12)},
+            unlocked() {return hasUpgrade('pr',12) || hasUpgrade('gen',11)},
             buttonStyle: {
                 "width": "450px",
                 "margin": "10px",
@@ -1003,6 +1019,7 @@ addLayer("bst", {
     startData() { return {
         unlocked: true,
 		points: new Decimal(0),
+        total: new Decimal(0)
     }},
     color: "#6f64c5",
     requires: new Decimal(5e18), // Can be a function that takes requirement increases into account
@@ -1019,17 +1036,76 @@ addLayer("bst", {
         return new Decimal(1)
     },
     row: 2, // Row the layer is in on the tree (0 is the first row)
+    tabFormat: {
+        "Upgrades": {
+            content: [
+                ["infobox", 1],
+                "prestige-button",
+                "blank",
+                ["upgrade-tree", [[21, 22],[11]]]
+            ],
+            buttonStyle: {
+                "width": "450px",
+                "margin": "10px"
+            },
+        },
+        "Boosters": {
+            content: [
+                ["infobox",1],
+                "prestige-button",
+                "blank",
+                "buyables"
+            ],
+            unlocked() {return true},
+            buttonStyle: {
+                "width": "450px",
+                "margin": "10px"
+            },
+        }
+    },
     upgrades: {
         11: {
-            title: "Example",
-            description: "Example",
-            effect() {return null},
-            effectDisplay() {return format("Tax")},
-            cost: 1,
-            unlocked() {return false},
-            onPurchase() {},
-            tooltip: "Example"
-        }
+            fullDisplay() {return `<h3>B1: bosting</h3><br>
+            Total Booster Energy multiplies first three stats<br>
+            [p, n, P]<br>
+            Currently: ` + format(this.effect()) + `<br>
+            Cost: 1.00B`},
+            tooltip: `Effect:<br>(tB/10)+1.3<br><br>Recommended first`,
+            effect() {
+                if(hasUpgrade(this.layer,21)) return player.bst.total.times(0.1).add(upgradeEffect(this.layer,21)).add(1.3)
+                else return player.bst.total.times(0.1).add(1.3)
+            },
+            canAfford() {return player.bst.points.gte(1)},
+            pay() {player.bst.points = player.bst.points.sub(1)},
+            branches: [21]
+        },
+        21: {
+            fullDisplay() {return `<h3>B2: bosting+</h3><br>
+            Bought Boosters add to B1's effect.<br>
+            Currently: +` + format(this.effect()) + `<br>
+            Cost: 5.00B`},
+            tooltip: `Effect:<br>+0.05 per booster`,
+            effect() {
+                let temp = new Decimal(0)
+                temp = temp.add(getBuyableAmount(this.layer,11))
+                temp = temp.add(getBuyableAmount(this.layer,12))
+                temp = temp.add(getBuyableAmount(this.layer,13))
+                return temp.times(0.05)
+            },
+            canAfford() {return player.bst.points.gte(5)},
+            pay() {player.bst.points = player.bst.points.sub(5)},
+            unlocked() {return hasUpgrade('bst',11)},
+            branches: [22]
+        },
+        22: {
+            fullDisplay() {return `<h3>B3: bostingX</h3><br>
+            Unlock a fourth Booster.<br>
+            Cost: 12.00B`},
+            tooltip: "Triggers endgame",
+            canAfford() {return player.bst.points.gte(12)},
+            pay() {player.bst.points = player.bst.points.sub(12)},
+            unlocked() {return hasUpgrade('bst',21)}
+        },
     }, //contains one copyable upgrade.
     achievements: {
         11: {
@@ -1044,7 +1120,7 @@ addLayer("bst", {
     infoboxes: {
         1: {
             title() {return "You have " + format(player[this.layer].points) + "B (Booster Energy)"},
-            body() {return `This is the first tier 2 reset layer, Booster Energy. After resetting for it, you can use it to buy OG Boosters as well as upgrades in the tab for its own tree.<br>It's up to you which one you choose first. Have fun!<br><br>Note that the first row 2 reset is currently endgame.`},
+            body() {return `This is the first tier 2 reset layer, Booster Energy. After resetting for it, you can use it to buy OG Boosters as well as upgrades in the tab for its own tree.<br>It's up to you which one you choose first. Have fun!<br><br>Note that Upgrade B3 is currently endgame.`},
             unlocked() {return true},
         },
     }, //Contains one copyable infobox.
@@ -1059,18 +1135,46 @@ addLayer("bst", {
     }, //Contains one copyable milestone.
     buyables: {
         11: {
-            cost(x) { return new Decimal(1).mul(x) },
-            display() { return "Example" },
+            cost(x) { return new Decimal(2).pow(x) },
+            display() { return `<h3>Bα: OG Booster</h3><br>
+                At base, doubles Point gain per purchase.<br>
+                Currently: ` + getBuyableAmount(this.layer,this.id) + ` (` + format(buyableEffect(this.layer,this.id)) + `x)<br>
+                Next: ` + format(this.cost()) + `B` },
             canAfford() { return player[this.layer].points.gte(this.cost()) },
             buy() {
                 player[this.layer].points = player[this.layer].points.sub(this.cost())
                 setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
             },
-            unlocked() { return },
-            effect() { return },
-            display() { return },
-            purchaseLimit: {},
-            tooltip: "Example"
+            unlocked() { return true},
+            effect() { return new Decimal(2).pow(getBuyableAmount(this.layer,this.id))},
+        },
+        12: {
+            cost(x) { return new Decimal(3).pow(x) },
+            display() { return `<h3>Bβ: P Booster</h3><br>
+                At base, doubles Prestige Point gain per purchase.
+                Currently: ` + getBuyableAmount(this.layer,this.id) + ` (` + format(buyableEffect(this.layer,this.id)) + `x)<br>
+                Next: ` + format(this.cost()) + `B` },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return true},
+            effect() { return new Decimal(2).pow(getBuyableAmount(this.layer,this.id))},
+        },
+        13: {
+            cost(x) { return new Decimal(5).pow(x) },
+            display() { return `<h3>Bγ: n Booster</h3><br>
+                At base, doubles Negative Point gain per purchase.
+                Currently: ` + getBuyableAmount(this.layer,this.id) + ` (` + format(buyableEffect(this.layer,this.id)) + `x)<br>
+                Next: ` + format(this.cost()) + `B` },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return true},
+            effect() { return new Decimal(2).pow(getBuyableAmount(this.layer,this.id))},
         },
     }, //Contains one copyable buyable.
     //I would add a challenge but I am NOT doing allat (maybe later)
@@ -1103,17 +1207,52 @@ addLayer("gen", {
         return new Decimal(1)
     },
     row: 2, // Row the layer is in on the tree (0 is the first row)
+    tabFormat: {
+        "Upgrades": {
+            content: [
+                ["infobox", 1],
+                "prestige-button",
+                ["upgrade-tree", [[11,12,13], [21], [31,32]]]
+            ],
+            buttonStyle: {
+                "width": "450px",
+                "margin": "10px"
+            },
+        },
+        "Genergy": {
+            embedLayer: "gnr",
+            glowColor: "#287233",
+            unlocked() {return true},
+            buttonStyle: {
+                "width": "450px",
+                "margin": "10px"
+            },
+        }
+    },
     upgrades: {
         11: {
-            title: "Example",
-            description: "Example",
-            effect() {return null},
-            effectDisplay() {return format("Tax")},
-            cost: 1,
-            unlocked() {return false},
-            onPurchase() {},
-            tooltip: "Example"
-        }
+            fullDisplay() {return `<h3>G1: Generic Generation</h3><br>
+            Begin generating Genergy based on <i>best</i> Generators.<br>
+            Currently: ` + format(this.effect()) + `/s<br>
+            Cost: 1G`},
+            effect() {
+                let rate = player.gen.best      
+                rate = rate.times(buyableEffect('gnr',22))
+                if(hasUpgrade(this.layer,12)) rate = rate.pow(2)
+                return rate
+            },
+            canAfford() {return player.gen.points.gte(1)},
+            pay() {player.gen.points = player.gen.points.sub(1)},
+            branches: [12]
+        },
+        12: {
+            fullDisplay() {return `<h3>G2: Good stuff</h3><br>
+            Square Genergy gain (omg so veyry good).<br>
+            Cost: 6G`},
+            canAfford() {return player.gen.points.gte(6)},
+            pay() {player.bst.points = player.gen.points.sub(6)},
+            unlocked() {return hasUpgrade(this.layer,11)}
+        },
     }, //contains one copyable upgrade.
     achievements: {
         11: {
@@ -1163,4 +1302,114 @@ addLayer("gen", {
     tooltip() {return player[this.layer].points+" "+this.resource+` <br>
     Click to view`}
 })
+
+addLayer("gnr", {
+    name: "genergy",
+    symbol: "gnr",
+    position: 2,
+    row: 2,
+    startData() {return {
+        unlocked: true,
+        points: new Decimal(0)
+    }},
+    color: "#a4daa5",
+    requires: new Decimal(1),
+    canReset: false,
+    resource: "Genergy",
+    effect() {
+        var effect = player.gnr.points.pow(0.25).add(1)
+        return effect
+    },
+    canReset: false,
+    baseResource: "Points",
+    baseAmount() {return new Decimal(1)},
+    type: "normal",
+    exponent: 0.0000000000000000001,
+    gainMult() {
+        mult = new Decimal(0)
+        if(hasUpgrade('gen',11)) mult = mult.add(upgradeEffect('gen',11))
+        return mult
+    },
+    tabFormat: [
+        ["infobox",1],
+        "blank",
+        ["infobox",2],
+        "blank",
+        "blank",
+        "buyables"
+    ],
+    infoboxes: {
+        1: {
+            title() {return "You have " + format(player.gnr.points) + "g (Genergy) | +" + format(getResetGain(this.layer)) +  "/s"},
+            body() {return `Welcome to the Genergy sublayer! This resource generates based on your highest amount of Generators. Use it for the buyables below.`}
+        },
+        2: {
+            title() {return "Your Genergy is multiplying point gain by x" + format(player.gnr.points.pow(0.35).add(1))},
+            body() {return `You might want to be strategic with how you spend it to maximize your bonuses!<br>
+                Unfortunately this resource is stored in its own layer, so you can't reset for Generators here.`}
+        }
+    },
+    buyables: {
+        11: {
+            cost(x) { return new Decimal(12.5).pow(x.add(1)) },
+            display() { return `<h3>Gα: Generator Bonus A</h3>
+                Multiply Point gain by 1.3x per purchase.<br><br>
+                Currently: ` + getBuyableAmount(this.layer,this.id) + ` (` + format(buyableEffect(this.layer,this.id)) + `x)<br>
+                Next: ` + format(this.cost()) + `g` },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return true},
+            effect() { return new Decimal(1.3).pow(getBuyableAmount(this.layer,this.id))},
+        },
+        12: {
+            cost(x) { return new Decimal(18).pow(x.add(1)) },
+            display() { return `<h3>Gβ: Generator Bonus B</h3>
+                Multiply Prestige Point gain by 1.25x per purchase.<br>
+                Currently: ` + getBuyableAmount(this.layer,this.id) + ` (` + format(buyableEffect(this.layer,this.id)) + `x)<br>
+                Next: ` + format(this.cost()) + `g` },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return true},
+            effect() { return new Decimal(1.25).pow(getBuyableAmount(this.layer,this.id))},
+        },
+        21: {
+            cost(x) { return new Decimal(25).pow(x.add(1)) },
+            display() { return `<h3>Gγ: Generator Bonus C</h3>
+                Multiply Negative Point gain by 1.2x per purchase.<br>
+                Currently: ` + getBuyableAmount(this.layer,this.id) + ` (` + format(buyableEffect(this.layer,this.id)) + `x)<br>
+                Next: ` + format(this.cost()) + `g` },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return true},
+            effect() { return new Decimal(1.2).pow(getBuyableAmount(this.layer,this.id))},
+        },
+        22: {
+            cost(x) { return new Decimal(30).pow(x.add(1)) },
+            display() { return `<h3>GΔ: Generator Bonus D</h3>
+                Multiply Genergy gain by 1.5x per purchase.<br><br>
+                Currently: ` + getBuyableAmount(this.layer,this.id) + ` (` + format(buyableEffect(this.layer,this.id)) + `x)<br>
+                Next: ` + format(this.cost()) + `g` },
+            canAfford() { return player[this.layer].points.gte(this.cost()) },
+            buy() {
+                player[this.layer].points = player[this.layer].points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked() { return true},
+            effect() { return new Decimal(1.5).pow(getBuyableAmount(this.layer,this.id))},
+        },
+    }, //Contains one copyable buyable.
+    passiveGeneration() {return 1},
+    unlocked: true,
+    layerShown: false
+})
+
 //13123241

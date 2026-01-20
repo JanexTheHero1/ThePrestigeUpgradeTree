@@ -13,11 +13,20 @@ let modInfo = {
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.9",
-	name: "The update of version 0.9",
+	num: "1.0a",
+	name: "The update of version 1.0a",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
+	<h3>v1.0a</h3><br>
+		- Fixed broken n upgrade costs<br>
+		- Fixed upgrade n2’s effect<br>
+		- Formatted reset gain on Prestige button<br>
+		- Added first three B upgrades<br>
+		- Added three Boosters<br>
+		- Added first two G upgrades<br>	
+		- Added four Genergy buyables<br>
+		- New endgame: Upgrade B3<br><br>
 	<h3>v0.9</h3><br>
 		- Fixed upgrade p3 (2.5x p)<br>
 		- Buffed Negative Points’ effect, essentially nerfing point gain slightly<br>
@@ -90,13 +99,13 @@ function getPointGen() {
 	if(hasUpgrade('p',32)) gain = gain.add(1.5)
 	if(hasUpgrade('p',42)) gain = gain.add(2.5)
 	if(hasUpgrade('og',11)) gain = gain.add(upgradeEffect('og',11))
-
+	
 	//BPG- Nerfs
 	if(hasUpgrade('p', 901)) gain = gain.sub(player.np.points.pow(0.2))
-
+	
 	//Safeguards
 	if (gain.lte(1)) gain = new Decimal(1)
-
+	
 	//PGM+ upgrades	
 	if(hasUpgrade('p',11)) gain = gain.times(3)
 	if(hasUpgrade('p',21)) gain = gain.times(2)
@@ -116,7 +125,13 @@ function getPointGen() {
 	if(hasUpgrade('pr',31)) gain = gain.times(3)
 	if(hasUpgrade('p',62)) gain = gain.times(upgradeEffect('p',62))
 	if(hasUpgrade('np',22)) gain = gain.times(upgradeEffect('np',22))
-
+	if(hasUpgrade('bst',11)) gain = gain.times(upgradeEffect('bst',11))
+	gain = gain.times(buyableEffect('bst',11))
+	gain = gain.times(buyableEffect('gnr',11))
+	
+	//Safeguards
+	if (gain.lte(1)) gain = new Decimal(1)
+	
 	return gain
 }
 
@@ -130,7 +145,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return (player.bst.points.gte(1) || player.gen.points.gte(1))
+	return hasUpgrade('bst',22)
 }
 
 
